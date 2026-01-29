@@ -11,6 +11,7 @@ public class UIManager : MonoBehaviour
     public static UIManager Instance { get; private set; }
 
     public TextMeshProUGUI tileInfoText;
+    public TextMeshProUGUI cityInfoText;
     public TextMeshProUGUI unitInfoText;
     public TextMeshProUGUI victoryPointsText;
     public TextMeshProUGUI incomeText;
@@ -43,14 +44,27 @@ public class UIManager : MonoBehaviour
 
         string owner = tile.city != null ? tile.city.ownerCountry.countryName : "None";
 
-        tileInfoText.text = 
+        if(tile.building == null) {tileInfoText.text = 
         $@"Selected Hex Info:
         Owner: {owner}
         Type: {tile.hexType}
         Gold: {tile.gold}
         Production: {tile.production}
+        Food: {tile.food}
         Culture: {tile.culture}
         Science: {tile.science}";
+        } else {
+        tileInfoText.text = 
+        $@"Selected Hex Info:
+        Owner: {owner}
+        Type: {tile.hexType}
+        Building: {tile.building.BuildingDefinition.buildingType}
+        Gold: {tile.gold}
+        Production: {tile.production}
+        Food: {tile.food}
+        Culture: {tile.culture}
+        Science: {tile.science}";
+        }
 
         if (tile.unit != null)
         {
@@ -59,6 +73,15 @@ public class UIManager : MonoBehaviour
         else
         {
             MenuManager.Instance.HideUnitInformation();
+        }
+
+        if (tile.city != null)
+        {
+            UpdateCityInformation(tile.city);
+        }
+        else
+        {
+            MenuManager.Instance.HideCityInformation();
         }
     }
     public void UpdateUnitInformation(Unit unit)
@@ -76,9 +99,39 @@ public class UIManager : MonoBehaviour
         unitInfoText.text =
         $@"Selected Unit Info:
         Owner: {owner}
-        Type: {unit.unitType}
+        Type: {unit.UnitDefinition.UnitType}
         Moves: {unit.remainingMovement}
         HP: {unit.remainingHp}";
+    }
+
+    public void UpdateCityInformation(City city)
+    {
+        if (city == null)
+        {
+            MenuManager.Instance.HideCityInformation();
+            return;
+        }
+
+        MenuManager.Instance.ShowCityInformation();
+
+        string owner = city.ownerCountry != null ? city.ownerCountry.countryName : "None";
+    
+        if (owner == GameManager.Instance.playerCountry.countryName)
+        {
+            cityInfoText.text = 
+            $@"Selected City Info:
+            HP: {city.remainingHp}
+            PRODUCTION: {city.productionPerTurn}
+            PRODUCTION BUILDUP: {city.production}
+            FOOD: {city.foodPerTurn}";
+
+        } else
+        {
+            cityInfoText.text = 
+            $@"Selected City Info:
+            Owner: {owner}
+            HP: {city.remainingHp}";
+        }
     }
     public void UpdateVictoryPoints(List<Country> countries)
     {
@@ -92,21 +145,21 @@ public class UIManager : MonoBehaviour
     }
     public void UpdateIncome(Country country)
     {
-        incomeText.text = $"Gold: {country.gold}\n" +
-                          $"Science: {country.science}\n" +
-                          $"Culture: {country.culture}";
+        incomeText.text = $"Gold: {country.gold} + {country.goldPerTurn}\n" +
+                          $"Science: {country.science} + {country.sciencePerTurn}\n" +
+                          $"Culture: {country.culture} + {country.culturePerTurn} ";
     }
-    Country.CountryType GetCountryLeft()
+    CountryType GetCountryLeft()
     {
         int index = (carouselIndex - 1 + GameManager.Instance.countryTypes.Count) % GameManager.Instance.countryTypes.Count;
         return GameManager.Instance.countryTypes[index];
     }
-    Country.CountryType GetCountryRight()
+    CountryType GetCountryRight()
     {
         int index = (carouselIndex + 1) %  GameManager.Instance.countryTypes.Count;
         return GameManager.Instance.countryTypes[index];
     }
-    public Country.CountryType GetCountrySelected()
+    public CountryType GetCountrySelected()
     {
         return GameManager.Instance.countryTypes[carouselIndex];
     }
@@ -129,31 +182,31 @@ public class UIManager : MonoBehaviour
         carouselIndex = (carouselIndex - 1 + GameManager.Instance.countryTypes.Count) % GameManager.Instance.countryTypes.Count;
         SetUpCarosel();
     }
-    private Color GetCountryColor(Country.CountryType countryType)
+    private Color GetCountryColor(CountryType countryType)
     {
         switch (countryType)
         {
-            case Country.CountryType.Hungary: 
+            case CountryType.Hungary: 
                 return Color.red;
-            case Country.CountryType.Germany:
+            case CountryType.Germany:
                 return Color.black;
-            case Country.CountryType.Japan:
+            case CountryType.Japan:
                 return Color.white;
             default:
                 return Color.grey;
         }
     }
-    private void SetCountryDescription(Country.CountryType countryType)
+    private void SetCountryDescription(CountryType countryType)
     {
         switch (countryType)
         {
-            case Country.CountryType.Hungary: 
+            case CountryType.Hungary: 
                 countryDescription.text = "Hungary";
                 break;
-            case Country.CountryType.Germany:
+            case CountryType.Germany:
                 countryDescription.text = "Germany";
                 break;
-            case Country.CountryType.Japan:
+            case CountryType.Japan:
                 countryDescription.text = "Japan";
                 break;
             default:

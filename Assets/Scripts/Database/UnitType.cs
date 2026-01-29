@@ -1,0 +1,1 @@
+public enum UnitType {Settler, Scout, Warrior, Archer, CommercialShip, WarShip }

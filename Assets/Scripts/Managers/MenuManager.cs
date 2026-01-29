@@ -10,6 +10,7 @@ public class MenuManager : MonoBehaviour
     public GameObject VictoryInformation;
     public GameObject UnitInformation;
     public GameObject TileInformation;
+    public GameObject CityInformation;
     public GameObject victoryText;
 
     void Start()
@@ -75,6 +76,15 @@ public class MenuManager : MonoBehaviour
         TileInformation.SetActive(false);
     }
 
+    public void HideCityInformation()
+    {
+        CityInformation.SetActive(false);
+    }
+
+    public void ShowCityInformation()
+    {
+        CityInformation.SetActive(true);
+    }
     public void OnLeftCountryPress()
     {
         UIManager.Instance.RotateCaroselLeft();
@@ -83,7 +93,6 @@ public class MenuManager : MonoBehaviour
     {
         UIManager.Instance.RotateCaroselRight();
     }
-
     public void OnVictory()
     {
         victoryText.SetActive(true);

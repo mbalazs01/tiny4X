@@ -1,0 +1,1 @@
+public enum HexType {Land,Water,Debug }

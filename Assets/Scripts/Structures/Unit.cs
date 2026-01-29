@@ -7,32 +7,26 @@ using UnityEngine;
 
 public class Unit
 {
-    public enum UnitType {Settler, Scout, Warrior, Archer, CommercialShip, WarShip }
-    public enum UnitAbility {Settle, Embark, Attack, RangedAttack, ExploitResource}
-    public UnitType unitType { get; private set; }
-    public int maxHp { get; private set; }
+    public UnitDefinition UnitDefinition {get; private set; }
     public int remainingHp { get; private set; }
-    public int attack { get; private set; }
-    public int defense { get; private set; }
-    public int maxMovement { get; private set; }
     public int remainingMovement { get; private set; }
-    public int unitScore { get; private set; }
     public HexTile currentTile { get; private set; }
     public City ownerCity { get; private set; }
     public Country ownerCountry { get; private set; }
-    private HashSet<UnitAbility> abilities = new HashSet<UnitAbility>();
-    public Unit(UnitType type, HexTile tile, City city)
+    public Unit(UnitDefinition unitDefinition, HexTile tile)
     {
-        unitType = type;
+        UnitDefinition = unitDefinition;
         currentTile = tile;
-        ownerCity = city;
-        ownerCountry = city.ownerCountry;
+        ownerCity = tile.city;
+        ownerCountry = tile.city.ownerCountry;
         ownerCountry.AddUnit(this);
 
-        SetStats(type);
+        remainingHp = UnitDefinition.MaxHP;
+        remainingMovement = UnitDefinition.MaxMovement;
 
         currentTile.SetUnit(this);
-        ownerCountry.addScore(unitScore);
+        ownerCountry.ChangeScoreBy(unitDefinition.Score);
+        ownerCountry.ChangeGoldIncomeBy(-unitDefinition.MaintenanceCost);
     }
 
     public void DestroyUnit()
@@ -46,7 +40,8 @@ public class Unit
         if (ownerCountry != null)
         {
             ownerCountry.RemoveUnit(this);
-            ownerCountry.addScore(-unitScore);
+            ownerCountry.ChangeScoreBy(-UnitDefinition.Score);
+            ownerCountry.ChangeGoldIncomeBy(UnitDefinition.MaintenanceCost);
             ownerCountry = null;
         }
 
@@ -54,62 +49,7 @@ public class Unit
     }
     public bool HasAbility(UnitAbility ability)
     {
-        return abilities.Contains(ability);
-    }
-    private void SetStats(UnitType unitType)
-    {
-        maxHp = 1;
-        attack = 0;
-        defense = 0;
-        maxMovement = 0;
-        unitScore = 1;
-        abilities.Clear();
-
-        switch (unitType)
-        {
-            case UnitType.Settler: 
-                unitScore = 0;
-                maxMovement = remainingMovement = 2;
-                abilities.Add(UnitAbility.Settle);
-                break;
-            case UnitType.Scout:
-                maxHp = remainingHp = 5; 
-                attack = 2;
-                defense = 0;
-                maxMovement = remainingMovement = 3;
-                abilities.Add(UnitAbility.Attack);
-                break;
-            case UnitType.Warrior: 
-                maxHp = remainingHp = 10; 
-                attack = 5;
-                defense = 2;
-                maxMovement = remainingMovement = 2;
-                abilities.Add(UnitAbility.Attack);
-                break;
-            case UnitType.Archer: 
-                maxHp = remainingHp = 5; 
-                attack = 4;
-                defense = 1;
-                maxMovement = remainingMovement = 2;
-                abilities.Add(UnitAbility.RangedAttack);
-                break;
-            case UnitType.CommercialShip: 
-                unitScore = 0;
-                maxMovement = remainingMovement = 4;
-                abilities.Add(UnitAbility.Embark);
-                abilities.Add(UnitAbility.ExploitResource);
-                break;
-            case UnitType.WarShip: 
-                maxHp = remainingHp = 10; 
-                attack = 3;
-                defense = 2;
-                maxMovement = remainingMovement = 4;
-                abilities.Add(UnitAbility.Embark);
-                abilities.Add(UnitAbility.RangedAttack);
-                break;
-            default:
-                break;
-        }
+        return UnitDefinition.Abilities.Contains(ability);
     }
     internal void Move(HexTile clickedHex)
     {
@@ -134,22 +74,22 @@ public class Unit
         int cityAttack = 1;
         if(targetCity.cityCenterTile.unit != null)
         {
-            cityAttack += targetCity.cityCenterTile.unit.defense;
+            cityAttack += targetCity.cityCenterTile.unit.UnitDefinition.Defense;
         }
 
         TakeDamage(cityAttack);
-        targetCity.Siege(this.attack, this.ownerCountry);
+        targetCity.Siege(this.UnitDefinition.Attack, this.ownerCountry);
     }
 
     private void HandleCombat(Unit targetUnit)
     {
-        targetUnit.TakeDamage(attack);
-        TakeDamage(targetUnit.attack);
+        targetUnit.TakeDamage(UnitDefinition.Attack);
+        TakeDamage(targetUnit.UnitDefinition.Attack);
     }
 
     public void TakeDamage(int attack)
     {
-        int potentialDamage = attack - defense;
+        int potentialDamage = attack - UnitDefinition.Defense;
         potentialDamage = Mathf.Max(potentialDamage, 0);
 
         remainingHp -= potentialDamage;
@@ -162,10 +102,10 @@ public class Unit
 
     public void RegenHealth()
     {
-        if(remainingHp != maxHp)
+        if(remainingHp != UnitDefinition.MaxHP)
         {
             remainingHp += 2;
-            remainingHp = Mathf.Min(remainingHp, maxHp);
+            remainingHp = Mathf.Min(remainingHp, UnitDefinition.MaxHP);
         }
     }
     bool CanMoveTo(HexTile targetHex)
@@ -176,7 +116,7 @@ public class Unit
         if(!currentTile.IsTileAdjacent(targetHex))
             return false;
 
-        if(targetHex.hexType == HexTile.HexType.Water && !abilities.Contains(UnitAbility.Embark))
+        if(targetHex.hexType == HexType.Water && !UnitDefinition.Abilities.Contains(UnitAbility.Embark))
             return false;
 
         return true;
@@ -189,8 +129,14 @@ public class Unit
         currentTile = targetHex;
     }
 
+    public void EndTurn()
+    {
+        ResetMoves();
+        RegenHealth();
+    }
+
     public void ResetMoves()
     {
-        remainingMovement = maxMovement;
+        remainingMovement = UnitDefinition.MaxMovement;
     }
 }

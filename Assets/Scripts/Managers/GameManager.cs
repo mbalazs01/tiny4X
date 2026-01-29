@@ -10,9 +10,9 @@ public class GameManager : MonoBehaviour
 {
     public static GameManager Instance { get; private set; }
     public HexTile selectedTile {get; private set; }
-    public List<Country.CountryType> countryTypes;
+    public List<CountryType> countryTypes;
     private List<Country> countries = new List<Country>();
-    private Country playerCountry;
+    public Country playerCountry {get; private set; }
 
     // Gamerule Related Variables
     public bool GameRuleNoIdenticalCountriesAtGeneration {get; private set;} = true;
@@ -28,54 +28,54 @@ public class GameManager : MonoBehaviour
             return;
         }
 
-        countryTypes = Enum.GetValues(typeof(Country.CountryType))
-                       .Cast<Country.CountryType>()
+        countryTypes = Enum.GetValues(typeof(CountryType))
+                       .Cast<CountryType>()
                        .ToList();    
     }
 
-    public void StartGame(Country.CountryType playerCountryType)
+    public void StartGame(CountryType playerCountryType)
     {
         MapGenerator.Instance.GenerateMap();
         SetupCountries(playerCountryType);
     }
-    private void SetupCountries(Country.CountryType playerCountryType)
+    private void SetupCountries(CountryType playerCountryType)
     {
         generateAllCountries(playerCountryType);
 
         UIManager.Instance.UpdateIncome(playerCountry);
         UIManager.Instance.UpdateVictoryPoints(countries);
     }
-    void generateAllCountries(Country.CountryType playerCountryType)
+    void generateAllCountries(CountryType playerCountryType)
     {
         playerCountry = generateCountry(playerCountryType);
         CameraManager.Instance.MoveCameraToHex(playerCountry.cities[0].cityCenterTile);
 
         if(GameRuleNoIdenticalCountriesAtGeneration)
         {
-            List<Country.CountryType> availableTypes = new List<Country.CountryType>(countryTypes);
+            List<CountryType> availableTypes = new List<CountryType>(countryTypes);
             availableTypes.Remove(playerCountryType);
             
             Shuffle(availableTypes);                 
 
             for (int i = 1; i < PlayerCount; i++)
             {
-                Country.CountryType countryType = availableTypes[i - 1]; 
+                CountryType countryType = availableTypes[i - 1]; 
                 generateCountry(countryType);
             }
         } 
         else
         {
-            Country.CountryType countryType = countryTypes[UnityEngine.Random.Range(0, countryTypes.Count)];
+            CountryType countryType = countryTypes[UnityEngine.Random.Range(0, countryTypes.Count)];
             generateCountry(countryType);
         }
     }
 
-    Country generateCountry(Country.CountryType countryType)
+    Country generateCountry(CountryType countryType)
     {
         HexTile StartingTile = FindStartingTile();
         Country country = new Country(countryType);
         City City = new City(StartingTile, country);
-        Unit Warrior = new Unit(Unit.UnitType.Warrior, StartingTile, City);
+        Unit Scout = new Unit(UnitDatabase.Scout, StartingTile);
 
         countries.Add(country);
 
@@ -130,16 +130,16 @@ public class GameManager : MonoBehaviour
     {
         foreach(Country country in countries)
         {
-            country.UpdateIncome();
+            Debug.Log(country.countryName + " Ends Turn");
+            country.EndTurn();
             foreach(Unit unit in country.units)
             {
-                unit.ResetMoves();
-                unit.RegenHealth();
+                unit.EndTurn();
             }
 
             foreach(City city in country.cities)
             {
-                city.RegenHealth();
+                city.EndTurn();
             }
         }
 

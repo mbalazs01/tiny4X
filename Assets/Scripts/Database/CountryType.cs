@@ -1,0 +1,1 @@
+public enum CountryType {Hungary, Germany, Japan}

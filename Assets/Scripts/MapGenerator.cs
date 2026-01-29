@@ -119,7 +119,7 @@ public class MapGenerator : MonoBehaviour
 
                 if (!occupiedPositions.Contains(currentPosition))
                 {
-                    HexTile water = Instantiate(hexPrefab).SetType(HexTile.HexType.Water);
+                    HexTile water = Instantiate(hexPrefab).SetType(HexType.Water);
                     allTiles.Add(water);
                     water.transform.SetParent(transform, false);
                     water.transform.localPosition = currentPosition;
@@ -132,12 +132,12 @@ public class MapGenerator : MonoBehaviour
         /* 
         //Debug
         UnityEngine.Vector2 newPosition = new UnityEngine.Vector2(bottomLeft.x, bottomLeft.y);
-        HexTile tile = Instantiate<HexTile>(hexPrefab).SetType(HexTile.HexType.Debug);
+        HexTile tile = Instantiate<HexTile>(hexPrefab).SetType(HexType.Debug);
         tile.transform.SetParent(transform, false);
         tile.transform.localPosition = newPosition;
 
         UnityEngine.Vector2 newPosition2 = new UnityEngine.Vector2(topRight.x, topRight.y);
-        HexTile tile2 = Instantiate<HexTile>(hexPrefab).SetType(HexTile.HexType.Debug);
+        HexTile tile2 = Instantiate<HexTile>(hexPrefab).SetType(HexType.Debug);
         tile2.transform.SetParent(transform, false);
         tile2.transform.localPosition = newPosition2;  */
     }
@@ -157,7 +157,7 @@ public class MapGenerator : MonoBehaviour
         {
             occupiedPositions.Add(newPosition);
 
-            HexTile tile = landTiles[i] = Instantiate<HexTile>(hexPrefab).SetType(HexTile.HexType.Land);
+            HexTile tile = landTiles[i] = Instantiate<HexTile>(hexPrefab).SetType(HexType.Land);
             allTiles.Add(tile);
             tile.transform.SetParent(transform, false);
             tile.transform.localPosition = newPosition;

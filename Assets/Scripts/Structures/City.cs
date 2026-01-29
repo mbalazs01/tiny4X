@@ -10,8 +10,13 @@ public class City
     public int maxHp { get; private set; } = 1;
     public int remainingHp { get; private set; }
     public string name { get; private set; }
+    public int productionPerTurn {get; private set; } = 0;
+    public int production {get; private set;} = 0;
+    public int foodPerTurn {get; private set;} = 0;
+    private List<ConstructionDefinition> ConstructionQueue = new List<ConstructionDefinition>();
     public Country ownerCountry {get; private set;}
     public HashSet<HexTile> OwnedTiles { get; } = new();
+    public HexTile farmTile { get; private set; }
     public City(HexTile tile, Country country)
     {
         cityCenterTile = tile;
@@ -23,7 +28,7 @@ public class City
 
         ClaimStartingTiles(tile);
 
-        ownerCountry.UpdateIncome();
+        ownerCountry.EndTurn();
     }
     public void ChangeName(string newName)
     {
@@ -37,7 +42,6 @@ public class City
 
         targetTile.SetCity(this);
         OwnedTiles.Add(targetTile);
-        ownerCountry.addScore(1);
     }
 
     public void LoseTile(HexTile targetTile)
@@ -72,22 +76,8 @@ public class City
                 .OrderByDescending(tile => tile.production + tile.gold)
                 .First();
             ClaimTile(chosen);
+            if(farmTile == null) farmTile = chosen; // DELETE LATER DEBUG ONLY
         }
-
-        /*
-        foreach (Vector2 offset in HexNeighborOffsets)
-        {
-            Vector2 neighborPos = (Vector2)cityCenter.transform.position + offset;
-
-            HexTile tile = MapGenerator.Instance.allTiles.FirstOrDefault(t => Vector2.Distance((Vector2)t.transform.position, neighborPos) < 0.01f);
-            if (tile != null)
-            {
-                ClaimTile(tile);
-            }
-
-        }
-        */
-
     }
 
     public void Siege(int attack, Country attackingCountry)
@@ -96,7 +86,7 @@ public class City
 
         if(cityCenterTile.unit != null)
         {
-            cityDefense += cityCenterTile.unit.defense;
+            cityDefense += cityCenterTile.unit.UnitDefinition.Defense;
         }
 
         int potentialDamage = attack - cityDefense;
@@ -114,7 +104,6 @@ public class City
             Debug.Log("Repulsed Attack");
         }
     }
-
     private void TransferCity(Country newOwnerCountry)
     {
         Country oldOwnerCountry = ownerCountry;
@@ -128,8 +117,8 @@ public class City
 
         foreach(HexTile tile in OwnedTiles)
         {
-            oldOwnerCountry.addScore(-1);
-            newOwnerCountry.addScore(1);
+            tile.HandleCountryTransfer(oldOwnerCountry, newOwnerCountry);
+
             tile.UpdateSprite();
         }
 
@@ -142,12 +131,39 @@ public class City
             GameManager.Instance.removeCountry(oldOwnerCountry);
         }
     }
+    public void EndTurn()
+    {
+        RegenHealth();
+        production += productionPerTurn;
 
+        //UNIT TEST: ConstructionQueue.Add(new ConstructionDefinition(UnitDatabase.Archer));
+        //BUILDING TEST: ConstructionQueue.Add(new ConstructionDefinition(BuildingDatabase.Farm));
+
+        if(ConstructionQueue != null) {
+            if (production > ConstructionQueue[0].ProductionCost)
+            {
+                production -= ConstructionQueue[0].ProductionCost;
+                ConstructionQueue[0].Build(cityCenterTile);
+                //BUILDING TEST ConstructionQueue[0].Build(farmTile);
+                ConstructionQueue.Remove(ConstructionQueue[0]);
+            }
+        }
+    }
     public void RegenHealth() {
         if(remainingHp != maxHp)
         {
             remainingHp += 1;
             remainingHp = Mathf.Min(remainingHp, maxHp);
         }
+    }
+
+    public void ChangeProductionBy(int production)
+    {
+        productionPerTurn += production;
+    }
+
+    internal void ChangeFoodProductionBy(int food)
+    {
+        foodPerTurn += food;
     }
 }

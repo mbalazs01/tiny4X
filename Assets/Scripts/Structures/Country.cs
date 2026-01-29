@@ -4,11 +4,13 @@ using UnityEngine;
 
 public class Country
 {
-    public enum CountryType {Hungary, Germany, Japan }
     public CountryType countryType {get; private set;}
-    public int gold { get; private set;}
-    public int culture { get; private set;}
-    public int science { get; private set;}
+    public int goldPerTurn {get; private set; }
+    public int gold { get; private set;} = 0;
+    public int culturePerTurn {get; private set; }
+    public int culture { get; private set;} = 0;
+    public int sciencePerTurn {get; private set; }
+    public int science { get; private set;} = 0;
     public bool isHuman {get; private set;} = false;
     public string countryName {get; private set;}
     public Color countryColor {get; private set;}
@@ -60,27 +62,27 @@ public class Country
                 break;
         }
     }
-
-    public void UpdateIncome()
+    public void EndTurn()
     {
-        foreach(City city in cities)
-        {
-            foreach(HexTile ownedTile in city.OwnedTiles)
-            {
-                gold += ownedTile.gold;
-                science += ownedTile.science;
-                culture += ownedTile.culture;
-            }
-        }
-
-        foreach(Unit unit in units)
-        {
-            gold--;
-        }
+        Debug.Log("Trying to Do Turn End Country Logic");
+        gold += goldPerTurn;
+        science += sciencePerTurn;
+        culture += culturePerTurn;
+    } 
+    internal void ChangeScoreBy(int scoreChange)
+    {
+        score += scoreChange;
     }
-
-    internal void addScore(int acquiredScore)
+    internal void ChangeGoldIncomeBy(int incomeChange)
     {
-        score += acquiredScore;
+        goldPerTurn += incomeChange;
+    }
+    internal void ChangeScienceIncomeBy(int incomeChange)
+    {
+        sciencePerTurn += incomeChange;
+    }
+    internal void ChangeCultureIncomeBy(int incomeChange)
+    {
+        culturePerTurn += incomeChange;
     }
 }
