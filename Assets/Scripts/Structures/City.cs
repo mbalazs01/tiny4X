@@ -139,7 +139,7 @@ public class City
         //UNIT TEST: ConstructionQueue.Add(new ConstructionDefinition(UnitDatabase.Archer));
         //BUILDING TEST: ConstructionQueue.Add(new ConstructionDefinition(BuildingDatabase.Farm));
 
-        if(ConstructionQueue != null) {
+        if(ConstructionQueue != null && ConstructionQueue.Count != 0) {
             if (production > ConstructionQueue[0].ProductionCost)
             {
                 production -= ConstructionQueue[0].ProductionCost;

@@ -11,7 +11,7 @@ public class GameManager : MonoBehaviour
     public static GameManager Instance { get; private set; }
     public HexTile selectedTile {get; private set; }
     public List<CountryType> countryTypes;
-    private List<Country> countries = new List<Country>();
+    public List<Country> countries = new List<Country>();
     public Country playerCountry {get; private set; }
 
     // Gamerule Related Variables
@@ -37,6 +37,11 @@ public class GameManager : MonoBehaviour
     {
         MapGenerator.Instance.GenerateMap();
         SetupCountries(playerCountryType);
+        foreach(HexTile tile in MapGenerator.Instance.allTiles)
+        {
+            tile.SetStartingVisibility();
+        }
+        playerCountry.units[0].RevealSurroundingTiles();
     }
     private void SetupCountries(CountryType playerCountryType)
     {

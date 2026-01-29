@@ -20,6 +20,14 @@ public class HexTile : MonoBehaviour
     public HexType hexType { get; private set;}
     public bool isOccupied => unit != null;
     public bool isCityCenter = false;
+    public Dictionary<Country, bool> isExplored = new();
+    public void SetStartingVisibility()
+    {
+        foreach (Country c in GameManager.Instance.countries)
+        {
+            isExplored.Add(c, false);
+        }
+    }
     public void SetUnit(Unit newUnit)
     {
         unit = newUnit;
@@ -97,6 +105,12 @@ public class HexTile : MonoBehaviour
             default:
                 sr.color = Color.grey;
                 break;
+        }
+
+        if(GameManager.Instance.playerCountry == null || !isExplored.ContainsKey(GameManager.Instance.playerCountry) || isExplored[GameManager.Instance.playerCountry] == false)
+        {
+            sr.color = Color.grey;
+            return;
         }
 
         if (unit != null)
@@ -219,5 +233,11 @@ public class HexTile : MonoBehaviour
         city.ownerCountry.ChangeScoreBy(-building.BuildingDefinition.Score);
 
         ClearBuilding();
+    }
+
+    internal void Reveal(Country c)
+    {
+        isExplored[c] = true;
+        UpdateSprite();
     }
 }

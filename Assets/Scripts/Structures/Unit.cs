@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using Mono.Cecil;
 using Unity.Mathematics;
 using UnityEngine;
@@ -127,6 +128,8 @@ public class Unit
         currentTile.RemoveUnit();
         targetHex.SetUnit(this);
         currentTile = targetHex;
+
+        RevealSurroundingTiles();
     }
 
     public void EndTurn()
@@ -138,5 +141,18 @@ public class Unit
     public void ResetMoves()
     {
         remainingMovement = UnitDefinition.MaxMovement;
+    }
+
+    public void RevealSurroundingTiles()
+    {
+        List<HexTile> nearbyTiles = MapGenerator.Instance.allTiles
+            .Where(tile =>
+                Vector2.Distance(tile.transform.position, currentTile.transform.position) <= 3f && tile.isExplored[ownerCountry] == false)
+            .ToList();
+
+        foreach (HexTile tile in nearbyTiles)
+        {
+            tile.Reveal(ownerCountry);
+        }
     }
 }
